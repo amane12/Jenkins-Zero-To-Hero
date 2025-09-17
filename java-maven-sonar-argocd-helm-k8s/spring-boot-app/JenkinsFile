@@ -11,6 +11,31 @@ pipeline {
   }
 
   stages {
+    stage('Clean Workspace and Temp') {
+      steps {
+        script {
+          echo 'Cleaning workspace and temporary directories...'
+          // Clean Jenkins workspace
+          sh '''
+            echo "Removing workspace directory contents"
+            rm -rf "${WORKSPACE}/*"
+            rm -rf "${WORKSPACE}/.jenkins.tmp" || true
+          '''
+
+          // Optional: Clean durable task tmp directories inside workspace
+          sh '''
+            echo "Removing Jenkins tmp durable task directories"
+            rm -rf "${WORKSPACE}/@tmp/durable-*"
+          '''
+
+          // Clean system temp directory (caution: adjust path as needed)
+          sh '''
+            echo "Removing system temp files (/tmp)"
+            sudo rm -rf /tmp/*
+          '''
+        }
+      }
+    }
     stage('Checkout') {
       steps {
         sh 'echo passed'
