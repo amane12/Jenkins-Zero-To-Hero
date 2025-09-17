@@ -31,7 +31,7 @@ pipeline {
           // Clean system temp directory (caution: adjust path as needed)
           sh '''
             echo "Removing system temp files (/tmp)"
-            sudo rm -rf /tmp/*
+             rm -rf /tmp/*
           '''
         }
       }
