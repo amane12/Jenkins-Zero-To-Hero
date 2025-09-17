@@ -50,6 +50,16 @@
     </dependencies>
 
     <build>
+    <plugins>
+        <plugin>
+            <groupId>org.sonarsource.scanner.maven</groupId>
+            <artifactId>sonar-maven-plugin</artifactId>
+            <version>4.0.0.4121</version> <!-- Use a specific, stable version -->
+        </plugin>
+    </plugins>
+    </build>
+
+    <build>
 
         <finalName>spring-boot-web</finalName>
 
@@ -70,6 +80,4 @@
 
         </plugins>
     </build>
-
-
 </project>
