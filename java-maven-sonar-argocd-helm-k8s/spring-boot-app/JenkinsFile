@@ -1,14 +1,14 @@
 pipeline {
-  agent any // Indicates that no default agent is used for the entire pipeline.
-  
+   // Indicates that no default agent is used for the entire pipeline.
+  agent any
   stages {
     stage('Clean Workspace and Temp') {
-      agent {
+      /*agent {
         docker {
           image 'alpine:latest' // Use a lightweight Docker image for file operations.
           reuseNode true
         }
-      }
+      }*/
       steps {
         script {
           echo 'Cleaning workspace and temporary directories...'
