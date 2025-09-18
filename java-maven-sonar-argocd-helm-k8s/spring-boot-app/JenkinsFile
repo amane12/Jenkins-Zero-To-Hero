@@ -27,12 +27,12 @@ pipeline {
       }
     }
     stage('Checkout') {
-      agent {
+      /*agent {
         docker {
           image 'alpine/git:latest' // Use a specific image that includes git.
           reuseNode true
         }
-      }
+      }*/
       steps {
         sh 'echo passed'
         git branch: 'develop', url: 'https://github.com/amane12/Jenkins-Zero-To-Hero.git'
