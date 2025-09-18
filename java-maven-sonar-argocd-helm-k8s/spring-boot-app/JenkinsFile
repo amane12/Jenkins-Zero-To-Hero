@@ -1,5 +1,5 @@
 pipeline {
-  agent none // Indicates that no default agent is used for the entire pipeline.
+  agent any // Indicates that no default agent is used for the entire pipeline.
   
   stages {
     stage('Clean Workspace and Temp') {
