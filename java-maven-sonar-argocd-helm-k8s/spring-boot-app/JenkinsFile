@@ -3,9 +3,9 @@ pipeline {
 
   tools {
     // Add the name of the Maven tool you configured in Global Tool Configuration
-    Maven 'Maven 3.9.11' 
+    maven 'Maven' 
     // You should also specify the JDK name you configured
-    Java 'JDK 17'
+    jdk 'Java'
   }
 
   stages {
