@@ -22,10 +22,6 @@ pipeline {
             echo "Removing Jenkins tmp durable task directories"
             rm -rf "${WORKSPACE}/@tmp/durable-*"
           '''
-          sh '''
-            echo "Removing system temp files (/tmp)"
-            rm -rf /tmp/*
-          '''
         }
       }
     }
