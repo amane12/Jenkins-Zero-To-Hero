@@ -1,15 +1,14 @@
 pipeline {
-  agent none
-  /*{
-        docker {
-          image 'maven:3.9.11-sapmachine-17'
-          args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
-        }
-      }*/
+  agent none // Indicates that no default agent is used for the entire pipeline.
   
-
   stages {
     stage('Clean Workspace and Temp') {
+      agent {
+        docker {
+          image 'alpine:latest' // Use a lightweight Docker image for file operations.
+          reuseNode true
+        }
+      }
       steps {
         script {
           echo 'Cleaning workspace and temporary directories...'
@@ -19,25 +18,24 @@ pipeline {
             rm -rf "${WORKSPACE}/*"
             rm -rf "${WORKSPACE}/.jenkins.tmp" || true
           '''
-
           // Optional: Clean durable task tmp directories inside workspace
           sh '''
             echo "Removing Jenkins tmp durable task directories"
             rm -rf "${WORKSPACE}/@tmp/durable-*"
           '''
-
-          // Clean system temp directory (caution: adjust path as needed)
-          sh '''
-            echo "Removing system temp files (/tmp)"
-             rm -rf /tmp/*
-          '''
         }
       }
     }
     stage('Checkout') {
+      agent {
+        docker {
+          image 'alpine/git:latest' // Use a specific image that includes git.
+          reuseNode true
+        }
+      }
       steps {
         sh 'echo passed'
-        git branch: 'main', url: 'https://github.com/amane12/Jenkins-Zero-To-Hero.git'
+        git branch: 'develop', url: 'https://github.com/amane12/Jenkins-Zero-To-Hero.git'
       }
     }
     stage('Build and Test') {
@@ -55,6 +53,12 @@ pipeline {
       }
     }
     stage('Static Code Analysis') {
+      agent {
+        docker {
+          image 'maven:3.9.11-sapmachine-17'
+          reuseNode true
+        }
+      }
       environment {
         SONAR_URL = "http://172.25.126.199:9000"
       }
@@ -65,30 +69,31 @@ pipeline {
       }
     }
     stage('Build and Push Docker Image') {
-    agent {
-      docker {
-        image 'ubuntu:latest'
-        args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
-        reuseNode true
-      }
-    }
-    environment {
-      DOCKER_IMAGE = "shubh1641/ultimate-cicd:${BUILD_NUMBER}"
-      REGISTRY_CREDENTIALS = credentials('docker-cred')
-    }
-    steps {
-      script {
-        sh '''
-              apt-get update
-              apt-get install -y docker.io
-            '''
-      // Build Docker image
-        dir('java-maven-sonar-argocd-helm-k8s/spring-boot-app') {
-          sh "docker build -t ${DOCKER_IMAGE} ."
+      agent {
+        docker {
+          image 'ubuntu:latest'
+          args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
+          reuseNode true
         }
-        def dockerImage = docker.image("${DOCKER_IMAGE}")
+      }
+      environment {
+        DOCKER_IMAGE = "shubh1641/ultimate-cicd:${BUILD_NUMBER}"
+        REGISTRY_CREDENTIALS = credentials('docker-cred')
+      }
+      steps {
+        script {
+          sh '''
+            apt-get update
+            apt-get install -y docker.io
+          '''
+          // Build Docker image
+          dir('java-maven-sonar-argocd-helm-k8s/spring-boot-app') {
+            sh "docker build -t ${DOCKER_IMAGE} ."
+          }
+          def dockerImage = docker.image("${DOCKER_IMAGE}")
           docker.withRegistry('https://index.docker.io/v1/', REGISTRY_CREDENTIALS) {
-          dockerImage.push()
+            dockerImage.push()
+          }
         }
       }
     }
@@ -113,4 +118,3 @@ pipeline {
         }
     }
   }
-}
