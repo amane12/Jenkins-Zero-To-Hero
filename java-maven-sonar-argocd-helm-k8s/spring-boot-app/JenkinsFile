@@ -9,6 +9,12 @@ pipeline {
   }
 
   stages {
+    stage('Clean and Checkout') {
+      steps {
+        cleanWs()
+        checkout scm
+      }
+    }
     stage('Clean Workspace and Temp') {
       steps {
         script {
