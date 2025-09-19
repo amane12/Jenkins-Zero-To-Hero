@@ -98,7 +98,9 @@ pipeline {
                     git config --global user.email "shubham.xyz@gmail.com"
                     git config --global user.name "Shubham"
                     git config --global credential.helper store
+                    git config --global pull.rebase false
                     git pull origin develop
+                    git commit -m "Triggering build ${BUILD_NUMBER} - No changes" --allow-empty
                     echo "Updating deployment file with new image tag..."
                     echo "Current BUILD_NUMBER is ${BUILD_NUMBER}"
                     echo "GIT_REPO_NAME is ${GIT_REPO_NAME}"
