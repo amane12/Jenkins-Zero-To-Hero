@@ -95,8 +95,9 @@ pipeline {
         steps {
             withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                 sh '''
-                    git config user.email "shubham.xyz@gmail.com"
-                    git config user.name "Shubham"
+                    git config --global user.email "shubham.xyz@gmail.com"
+                    git config --global user.name "Shubham"
+                    git config --global credential.helper store
                     git pull origin develop
                     echo "Updating deployment file with new image tag..."
                     echo "Current BUILD_NUMBER is ${BUILD_NUMBER}"
