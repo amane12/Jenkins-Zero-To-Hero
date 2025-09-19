@@ -57,21 +57,21 @@ pipeline {
       }
     }
     stage('Build and Push Docker Image') {
-      agent {
+      /*agent {
         docker {
           image 'ubuntu:latest'
           args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
           reuseNode true
         }
-      }
+      }*/
       environment {
         DOCKER_IMAGE = "shubh1641/ultimate-cicd:${BUILD_NUMBER}"
         REGISTRY_CREDENTIALS = credentials('docker-credd')
       }
       steps {
-        /*script {
+        script {
           // You must install Docker on the agent, as it is no longer inherited from the Maven container
-          sh '''
+          /*sh '''
             apt-get update
             apt-get install -y sudo docker.io
           '''*/
@@ -107,3 +107,4 @@ pipeline {
         }
     }
   }
+}
