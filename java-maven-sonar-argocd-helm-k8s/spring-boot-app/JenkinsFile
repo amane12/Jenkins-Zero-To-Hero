@@ -1,24 +1,29 @@
 pipeline {
-   // Indicates that no default agent is used for the entire pipeline.
-  agent any
+  agent any // Change to 'any' or a specific label for your build node
+
+  tools {
+    // Add the name of the Maven tool you configured in Global Tool Configuration
+    maven 'Maven' 
+    // You should also specify the JDK name you configured
+    jdk 'Java'
+  }
+
   stages {
+    stage('Clean and Checkout') {
+      steps {
+        cleanWs()
+        checkout scm
+      }
+    }
     stage('Clean Workspace and Temp') {
-      /*agent {
-        docker {
-          image 'alpine:latest' // Use a lightweight Docker image for file operations.
-          reuseNode true
-        }
-      }*/
       steps {
         script {
           echo 'Cleaning workspace and temporary directories...'
-          // Clean Jenkins workspace
           sh '''
             echo "Removing workspace directory contents"
             rm -rf "${WORKSPACE}/*"
             rm -rf "${WORKSPACE}/.jenkins.tmp" || true
           '''
-          // Optional: Clean durable task tmp directories inside workspace
           sh '''
             echo "Removing Jenkins tmp durable task directories"
             rm -rf "${WORKSPACE}/@tmp/durable-*"
@@ -27,41 +32,24 @@ pipeline {
       }
     }
     stage('Checkout') {
-      /*agent {
-        docker {
-          image 'alpine/git:latest' // Use a specific image that includes git.
-          reuseNode true
-        }
-      }*/
       steps {
         sh 'echo passed'
         git branch: 'develop', url: 'https://github.com/amane12/Jenkins-Zero-To-Hero.git'
       }
     }
     stage('Build and Test') {
-      agent {
-        docker {
-          image 'maven:3.9.11-sapmachine-17'
-          args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
-          reuseNode true
-        }
-      }
+      // Remove the docker agent block entirely
       steps {
         sh 'ls -ltr'
-        // build the project and create a JAR file
+        // The 'mvn' command will now use the configured Maven from the `tools` block
         sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn clean package'
       }
     }
     stage('Static Code Analysis') {
-      agent {
-        docker {
-          image 'maven:3.9.11-sapmachine-17'
-          reuseNode true
-        }
-      }
       environment {
         SONAR_URL = "http://172.25.126.199:9000"
       }
+      // Remove the docker agent block entirely
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
           sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
@@ -78,26 +66,27 @@ pipeline {
       }
       environment {
         DOCKER_IMAGE = "shubh1641/ultimate-cicd:${BUILD_NUMBER}"
-        REGISTRY_CREDENTIALS = credentials('docker-cred')
+        REGISTRY_CREDENTIALS = credentials('docker-credd')
       }
       steps {
-        script {
+        /*script {
+          // You must install Docker on the agent, as it is no longer inherited from the Maven container
           sh '''
             apt-get update
-            apt-get install -y docker.io
-          '''
+            apt-get install -y sudo docker.io
+          '''*/
           // Build Docker image
           dir('java-maven-sonar-argocd-helm-k8s/spring-boot-app') {
             sh "docker build -t ${DOCKER_IMAGE} ."
           }
           def dockerImage = docker.image("${DOCKER_IMAGE}")
-          docker.withRegistry('https://index.docker.io/v1/', REGISTRY_CREDENTIALS) {
+          docker.withRegistry('https://index.docker.io/v1/', "docker-credd" ) {
             dockerImage.push()
           }
         }
       }
     }
-  }
+
     stage('Update Deployment File') {
         environment {
             GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
@@ -112,7 +101,7 @@ pipeline {
                     sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                     git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:develop
                 '''
             }
         }
