@@ -73,7 +73,7 @@ pipeline {
           // You must install Docker on the agent, as it is no longer inherited from the Maven container
           sh '''
             sudo apt-get update
-            sudo apt-get install -y docker.io
+            sudo apt-get install -y sudo docker.io
           '''
           // Build Docker image
           dir('java-maven-sonar-argocd-helm-k8s/spring-boot-app') {
